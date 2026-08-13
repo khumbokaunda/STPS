@@ -1,4 +1,28 @@
-<?php /** @var array $items */ ?>
+<?php /** @var array $items */ /** @var array $approved */ ?>
+<section class="card">
+  <h2>Prepare an RFQ from an approved requisition</h2>
+  <?php if ($approved): ?>
+    <form method="post" action="/rfqs/prepare" class="row">
+      <input type="hidden" name="_csrf" value="<?= $e($csrf) ?>">
+      <label>Requisition
+        <select name="requisition_id" required>
+          <?php foreach ($approved as $r): ?>
+            <option value="<?= $e($r['id']) ?>"><?= $e($r['reference_no']) ?> — <?= $e($r['title']) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </label>
+      <label>Method
+        <select name="procurement_method">
+          <option>OPEN_TENDER</option><option>RESTRICTED_TENDER</option><option>REQUEST_FOR_QUOTATIONS</option><option>SINGLE_SOURCE</option>
+        </select>
+      </label>
+      <button type="submit">Prepare draft RFQ</button>
+    </form>
+  <?php else: ?>
+    <p class="muted">No approved requisitions awaiting an RFQ.</p>
+  <?php endif; ?>
+</section>
+
 <section class="card">
   <h2>RFQs</h2>
   <p class="muted small">Publishing an RFQ locks its timing (bid deadline, reveal window). The exact timing is captured in the ledger, so any later change is detectable even if a trigger is bypassed.</p>

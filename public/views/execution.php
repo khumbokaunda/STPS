@@ -1,4 +1,26 @@
-<?php /** @var array $contracts */ ?>
+<?php /** @var array $contracts */ /** @var array $pos */ ?>
+<section class="card">
+  <h2>Issue a purchase order</h2>
+  <form method="post" action="/execution/po" class="row">
+    <input type="hidden" name="_csrf" value="<?= $e($csrf) ?>">
+    <label>Contract
+      <select name="contract_id" required>
+        <?php foreach ($contracts as $c): ?><option value="<?= $e($c['id']) ?>"><?= $e($c['contract_number']) ?></option><?php endforeach; ?>
+      </select>
+    </label>
+    <label>PO number <input name="po_number" required></label>
+    <label>Total value <input name="total_value" inputmode="decimal" required></label>
+    <label>Currency <select name="currency_code"><option>MWK</option><option>USD</option><option>EUR</option><option>GBP</option><option>ZAR</option></select></label>
+    <button type="submit">Issue PO</button>
+  </form>
+  <?php if ($pos): ?>
+    <table>
+      <thead><tr><th>PO id</th><th>Number</th><th>Contract</th><th>Status</th></tr></thead>
+      <tbody><?php foreach ($pos as $p): ?><tr><td class="mono small"><?= $e($p['id']) ?></td><td><?= $e($p['po_number']) ?></td><td><?= $e($p['contract_number']) ?></td><td><?= $e($p['status']) ?></td></tr><?php endforeach; ?></tbody>
+    </table>
+  <?php endif; ?>
+</section>
+
 <section class="card">
   <h2>Record a delivery</h2>
   <form method="post" action="/execution/delivery" class="row">

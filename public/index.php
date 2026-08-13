@@ -201,6 +201,10 @@ try {
         case $route === 'GET /rfqs/open':
             pageRfqsOpen();
             break;
+        case $route === 'POST /rfqs/prepare':
+            requireCsrf();
+            actionPrepareRfq();
+            break;
         case $route === 'POST /rfqs/publish':
             requireCsrf();
             actionPublishRfq();
@@ -227,6 +231,14 @@ try {
         case $route === 'GET /evaluation':
             pageEvaluation();
             break;
+        case $route === 'POST /evaluation/team':
+            requireCsrf();
+            actionConstituteTeam();
+            break;
+        case $route === 'POST /evaluation/criterion':
+            requireCsrf();
+            actionAddCriterion();
+            break;
         case $route === 'POST /evaluation/score':
             requireCsrf();
             actionSubmitScore();
@@ -251,6 +263,10 @@ try {
         // --- execution ---
         case $route === 'GET /execution':
             pageExecution();
+            break;
+        case $route === 'POST /execution/po':
+            requireCsrf();
+            actionIssuePo();
             break;
         case $route === 'POST /execution/delivery':
             requireCsrf();
@@ -277,6 +293,14 @@ try {
         // --- admin ---
         case $route === 'GET /admin':
             pageAdmin();
+            break;
+        case $route === 'POST /admin/department':
+            requireCsrf();
+            actionCreateDepartment();
+            break;
+        case $route === 'POST /admin/bidder':
+            requireCsrf();
+            actionCreateBidder();
             break;
 
         // --- audit ---

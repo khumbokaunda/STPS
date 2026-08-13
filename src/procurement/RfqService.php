@@ -64,6 +64,87 @@ final class RfqService
     }
 
     /**
+     * Prepare a draft RFQ from an approved requisition (PDU officer). Bundles the
+     * bidding-document, an initial approved version, and a draft RFQ so the sealed
+     * bid flow can begin. Timing is a placeholder until publish() locks it.
+     * Ledger DOCUMENT_VERSION_ADDED (system-actor step).
+     *
+     * @return string the new rfq_id (16 bytes)
+     */
+    public function prepareFromRequisition(string $userId16, string $requisitionId16, string $method): string
+    {
+        $this->s->authz->requireRole($userId16, Rbac::PDU_OFFICER);
+        $now = Clock::now();
+
+        $req = $this->loadRequisition($requisitionId16);
+        if ($req['status'] !== 'approved') {
+            throw new RuntimeException('Requisition must be approved before an RFQ is prepared.');
+        }
+
+        $documentId = Uuid::bin();
+        $versionId = Uuid::bin();
+        $rfqId = Uuid::bin();
+        $contentHash = Hasher::sha256('bidding-document:' . $req['reference_no']);
+        // Placeholder deadline (NOT NULL column); publish() overwrites it while draft.
+        $placeholder = $now->add(new DateInterval('P365D'));
+
+        return Db::transaction($this->s->pdo, function (PDO $pdo) use (
+            $documentId, $versionId, $rfqId, $requisitionId16, $req, $method, $contentHash, $userId16, $now, $placeholder
+        ) {
+            $d = $pdo->prepare('INSERT INTO bidding_documents (document_id, requisition_id, status, created_at) VALUES (:id,:req,"approved",:at)');
+            $d->bindValue(':id', $documentId, PDO::PARAM_LOB);
+            $d->bindValue(':req', $requisitionId16, PDO::PARAM_LOB);
+            $d->bindValue(':at', Clock::mysql($now));
+            $d->execute();
+
+            $v = $pdo->prepare('INSERT INTO bidding_document_versions (version_id, document_id, version_no, content_hash, schema_version, storage_reference, created_by, created_at) VALUES (:id,:doc,1,:ch,:sv,:ref,:by,:at)');
+            $v->bindValue(':id', $versionId, PDO::PARAM_LOB);
+            $v->bindValue(':doc', $documentId, PDO::PARAM_LOB);
+            $v->bindValue(':ch', $contentHash, PDO::PARAM_LOB);
+            $v->bindValue(':sv', DomainSeparators::REQUISITION);
+            $v->bindValue(':ref', 'req:' . $req['reference_no']);
+            $v->bindValue(':by', $userId16, PDO::PARAM_LOB);
+            $v->bindValue(':at', Clock::mysql($now));
+            $v->execute();
+
+            $u = $pdo->prepare('UPDATE bidding_documents SET approved_version_id = :v WHERE document_id = :d');
+            $u->bindValue(':v', $versionId, PDO::PARAM_LOB);
+            $u->bindValue(':d', $documentId, PDO::PARAM_LOB);
+            $u->execute();
+
+            $r = $pdo->prepare('INSERT INTO rfqs (rfq_id, requisition_id, bidding_document_version_id, reference_no, procurement_method, bid_deadline, status, created_at) VALUES (:id,:req,:ver,:ref,:method,:bd,"draft",:at)');
+            $r->bindValue(':id', $rfqId, PDO::PARAM_LOB);
+            $r->bindValue(':req', $requisitionId16, PDO::PARAM_LOB);
+            $r->bindValue(':ver', $versionId, PDO::PARAM_LOB);
+            $r->bindValue(':ref', $req['reference_no'] . '-RFQ');
+            $r->bindValue(':method', $method);
+            $r->bindValue(':bd', Clock::mysql($placeholder));
+            $r->bindValue(':at', Clock::mysql($now));
+            $r->execute();
+
+            $up = $pdo->prepare('UPDATE requisitions SET status = "procurement" WHERE requisition_id = :id');
+            $up->bindValue(':id', $requisitionId16, PDO::PARAM_LOB);
+            $up->execute();
+
+            $this->s->ledger->append($userId16, LedgerActions::DOCUMENT_VERSION_ADDED, 'bidding_document', $documentId,
+                ['requisition_reference' => $req['reference_no'], 'content_hash' => bin2hex($contentHash)]);
+            return $rfqId;
+        });
+    }
+
+    private function loadRequisition(string $requisitionId16): array
+    {
+        $stmt = $this->s->pdo->prepare('SELECT requisition_id, reference_no, status FROM requisitions WHERE requisition_id = :id LIMIT 1');
+        $stmt->bindValue(':id', $requisitionId16, PDO::PARAM_LOB);
+        $stmt->execute();
+        $row = $stmt->fetch();
+        if ($row === false) {
+            throw new RuntimeException('Requisition not found.');
+        }
+        return $row;
+    }
+
+    /**
      * Publish an RFQ, locking timing. bid_deadline < reveal_start < reveal_deadline
      * must already be ordered (schema CHECK). The ledger entry captures the exact
      * timing so deadline tampering is detectable.

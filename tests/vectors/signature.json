@@ -1,7 +1,7 @@
 {
   "description": "ECDSA P-256 signature over a 32-byte to_sign digest, WebCrypto P1363 form.",
-  "spki_base64": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAENkUEZIycrFBp45RRt8YCQY7NIfMzRMhcIr/zVHqrgH2pDM4W3PBq+C+KR0bPEQt3lfXFjwMhIwwJohGVujAz2Q==",
+  "spki_base64": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEBnV35y9nEVv17poM5P4lmISnlq3KNrzChbVoRbgwRbp8FBy3dpIj7w9iFStebFN3hu+1TKWCE192A2y0NMLbPg==",
   "to_sign_hex": "030a11181f262d343b424950575e656c737a81888f969da4abb2b9c0c7ced5dc",
-  "signature_p1363_base64": "TXefVTbIoknJUczmfcdJUk9zWqS+8P3t1ZV7nfubho0U2QpGvaKkrkmRBwvhlafnEGmc4Kof68zCZu5o3wH7ow==",
+  "signature_p1363_base64": "laPBmdVt3aUu4fT/r6LoAl8WSOFx5+v+hOQ+LD8Lup7I3hDMd9kCUTdq5mFd+51oWVwHo4ZWHOd1L3QdOu2/cA==",
   "signature_p1363_len": 64
 }

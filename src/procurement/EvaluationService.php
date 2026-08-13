@@ -18,6 +18,31 @@ final class EvaluationService
         $this->s = $s;
     }
 
+    /** Add an evaluation criterion to an RFQ (controlling officer). */
+    public function addCriterion(
+        string $userId16,
+        string $rfqId16,
+        string $name,
+        string $weightDecimal,
+        string $maxScoreDecimal,
+        int $sequenceNo
+    ): string {
+        $this->s->authz->requireAnyRole($userId16, [Rbac::CONTROLLING_OFFICER, Rbac::PDU_OFFICER]);
+        $criterionId = Uuid::bin();
+        $stmt = $this->s->pdo->prepare(
+            'INSERT INTO evaluation_criteria (criterion_id, rfq_id, name, weight, maximum_score, sequence_no)
+             VALUES (:id, :rfq, :name, :w, :max, :seq)'
+        );
+        $stmt->bindValue(':id', $criterionId, PDO::PARAM_LOB);
+        $stmt->bindValue(':rfq', $rfqId16, PDO::PARAM_LOB);
+        $stmt->bindValue(':name', $name);
+        $stmt->bindValue(':w', $weightDecimal);
+        $stmt->bindValue(':max', $maxScoreDecimal);
+        $stmt->bindValue(':seq', $sequenceNo, PDO::PARAM_INT);
+        $stmt->execute();
+        return $criterionId;
+    }
+
     /** Constitute the evaluation team for an RFQ (controlling officer). */
     public function constituteTeam(string $userId16, string $rfqId16, array $memberUserIds16): string
     {

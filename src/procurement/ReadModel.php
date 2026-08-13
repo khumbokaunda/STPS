@@ -111,6 +111,55 @@ final class ReadModel
         ], $stages);
     }
 
+    /** Requisitions approved and not yet turned into an RFQ. */
+    public function approvedRequisitions(): array
+    {
+        $rows = $this->q("SELECT requisition_id, reference_no, title, estimated_value, currency_code, procurement_type
+                          FROM requisitions WHERE status = 'approved' ORDER BY created_at ASC");
+        return array_map(fn($r) => [
+            'id' => bin2hex($r['requisition_id']), 'reference_no' => $r['reference_no'],
+            'title' => $r['title'], 'estimated_value' => $r['estimated_value'],
+            'currency_code' => $r['currency_code'], 'procurement_type' => $r['procurement_type'],
+        ], $rows);
+    }
+
+    public function criteria(string $rfqId16): array
+    {
+        $stmt = $this->pdo->prepare('SELECT criterion_id, name, weight, maximum_score, sequence_no
+                                     FROM evaluation_criteria WHERE rfq_id = :r ORDER BY sequence_no');
+        $stmt->bindValue(':r', $rfqId16, PDO::PARAM_LOB);
+        $stmt->execute();
+        return array_map(fn($r) => [
+            'id' => bin2hex($r['criterion_id']), 'name' => $r['name'],
+            'weight' => $r['weight'], 'maximum_score' => $r['maximum_score'], 'sequence_no' => (int) $r['sequence_no'],
+        ], $stmt->fetchAll());
+    }
+
+    public function evaluationTeams(): array
+    {
+        $rows = $this->q('SELECT t.team_id, r.reference_no, t.status
+                          FROM evaluation_teams t JOIN rfqs r ON r.rfq_id = t.rfq_id ORDER BY t.constituted_at DESC');
+        return array_map(fn($r) => ['id' => bin2hex($r['team_id']), 'reference_no' => $r['reference_no'], 'status' => $r['status']], $rows);
+    }
+
+    public function purchaseOrders(): array
+    {
+        $rows = $this->q('SELECT po.purchase_order_id, po.po_number, po.status, c.contract_number
+                          FROM purchase_orders po JOIN contracts c ON c.contract_id = po.contract_id ORDER BY po.issued_at DESC');
+        return array_map(fn($r) => [
+            'id' => bin2hex($r['purchase_order_id']), 'po_number' => $r['po_number'],
+            'status' => $r['status'], 'contract_number' => $r['contract_number'],
+        ], $rows);
+    }
+
+    /** Look up a user id (hex) by username, or null. */
+    public function userIdByUsername(string $username): ?string
+    {
+        $rows = $this->q('SELECT user_id FROM users WHERE username = :u LIMIT 1', [':u' => $username]);
+        $id = $rows[0]['user_id'] ?? null;
+        return $id ? bin2hex($id) : null;
+    }
+
     public function rfqs(?string $status = null): array
     {
         $sql = 'SELECT r.rfq_id, r.reference_no, r.procurement_method, r.status, r.bid_deadline,

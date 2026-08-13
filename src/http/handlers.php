@@ -242,7 +242,7 @@ function pageBiddingDocuments(): void
 function pageRfqs(): void
 {
     requireLogin();
-    page('rfqs', ['items' => rm()->rfqs()], 'RFQs');
+    page('rfqs', ['items' => rm()->rfqs(), 'approved' => rm()->approvedRequisitions()], 'RFQs');
 }
 
 function pageRfqsOpen(): void
@@ -252,6 +252,16 @@ function pageRfqsOpen(): void
         'items' => rm()->rfqs('published'),
         'bidder_id' => rm()->bidderIdForUser($ctx['user_bin']),
     ], 'Open RFQs');
+}
+
+function actionPrepareRfq(): void
+{
+    $ctx = requireLogin();
+    $reqHex = Validator::requireUuidHex($_POST['requisition_id'] ?? null, 'requisition_id');
+    $method = Validator::requireEnum($_POST['procurement_method'] ?? 'OPEN_TENDER', 'procurement_method',
+        ['OPEN_TENDER', 'RESTRICTED_TENDER', 'REQUEST_FOR_QUOTATIONS', 'SINGLE_SOURCE']);
+    $rfqId = (new RfqService(svc()))->prepareFromRequisition($ctx['user_bin'], Uuid::fromString($reqHex), $method);
+    redirect('/rfqs', 'ok', 'Draft RFQ prepared: ' . bin2hex($rfqId) . '. Set its timing and publish.');
 }
 
 function actionPublishRfq(): void
@@ -337,7 +347,36 @@ function actionBidReveal(): void
 function pageEvaluation(): void
 {
     requireLogin();
-    page('evaluation', ['rfqs' => rm()->rfqs(), 'bids' => rm()->bids()], 'Evaluation');
+    page('evaluation', [
+        'rfqs' => rm()->rfqs(),
+        'bids' => rm()->bids(),
+        'teams' => rm()->evaluationTeams(),
+    ], 'Evaluation');
+}
+
+function actionConstituteTeam(): void
+{
+    $ctx = requireLogin();
+    $rfqHex = Validator::requireUuidHex($_POST['rfq_id'] ?? null, 'rfq_id');
+    $memberUsername = Validator::requireString($_POST['member_username'] ?? null, 'member_username', 100);
+    $memberHex = rm()->userIdByUsername($memberUsername);
+    if ($memberHex === null) {
+        redirect('/evaluation', 'err', "No user named '{$memberUsername}'.");
+    }
+    $teamId = (new EvaluationService(svc()))->constituteTeam($ctx['user_bin'], Uuid::fromString($rfqHex), [Uuid::fromString($memberHex)]);
+    redirect('/evaluation', 'ok', 'Evaluation team constituted: ' . bin2hex($teamId));
+}
+
+function actionAddCriterion(): void
+{
+    $ctx = requireLogin();
+    $rfqHex = Validator::requireUuidHex($_POST['rfq_id'] ?? null, 'rfq_id');
+    $name = Validator::requireString($_POST['name'] ?? null, 'name', 255);
+    $weight = Validator::requireDecimal($_POST['weight'] ?? null, 'weight', 4);
+    $maxScore = Validator::requireDecimal($_POST['maximum_score'] ?? null, 'maximum_score', 4);
+    $seq = Validator::requireInt($_POST['sequence_no'] ?? 1, 'sequence_no', 1, 999);
+    $critId = (new EvaluationService(svc()))->addCriterion($ctx['user_bin'], Uuid::fromString($rfqHex), $name, $weight, $maxScore, $seq);
+    redirect('/evaluation', 'ok', 'Criterion added: ' . bin2hex($critId));
 }
 
 function actionSubmitScore(): void
@@ -423,7 +462,18 @@ function actionSignContract(): void
 function pageExecution(): void
 {
     requireLogin();
-    page('execution', ['contracts' => rm()->contracts()], 'Execution');
+    page('execution', ['contracts' => rm()->contracts(), 'pos' => rm()->purchaseOrders()], 'Execution');
+}
+
+function actionIssuePo(): void
+{
+    $ctx = requireLogin();
+    $contractHex = Validator::requireUuidHex($_POST['contract_id'] ?? null, 'contract_id');
+    $poNumber = Validator::requireString($_POST['po_number'] ?? null, 'po_number', 100);
+    $total = Validator::requireDecimal($_POST['total_value'] ?? null, 'total_value', 2);
+    $currency = Validator::requireEnum($_POST['currency_code'] ?? 'MWK', 'currency_code', ['MWK', 'USD', 'EUR', 'GBP', 'ZAR']);
+    $poId = (new AwardContractExecutionService(svc()))->issuePurchaseOrder($ctx['user_bin'], Uuid::fromString($contractHex), $poNumber, $total, $currency);
+    redirect('/execution', 'ok', 'Purchase order issued: ' . bin2hex($poId));
 }
 
 function actionRecordDelivery(): void
@@ -490,6 +540,37 @@ function pageAdmin(): void
 {
     requireLogin();
     page('admin', ['roles' => rm()->roles(), 'departments' => rm()->departments(), 'bidders' => rm()->bidders()], 'Admin');
+}
+
+function actionCreateDepartment(): void
+{
+    $ctx = requireLogin();
+    svc()->authz->requireRole($ctx['user_bin'], Rbac::SYSTEM_ADMINISTRATOR);
+    $name = Validator::requireString($_POST['name'] ?? null, 'name', 200);
+    $code = Validator::requireString($_POST['code'] ?? null, 'code', 50);
+    $stmt = Db::app()->prepare('INSERT INTO departments (department_id, name, code, created_at) VALUES (:i,:n,:c,:t)');
+    $stmt->bindValue(':i', Uuid::bin(), PDO::PARAM_LOB);
+    $stmt->bindValue(':n', $name);
+    $stmt->bindValue(':c', $code);
+    $stmt->bindValue(':t', Clock::mysql(Clock::now()));
+    $stmt->execute();
+    redirect('/admin', 'ok', 'Department created.');
+}
+
+function actionCreateBidder(): void
+{
+    $ctx = requireLogin();
+    svc()->authz->requireRole($ctx['user_bin'], Rbac::SYSTEM_ADMINISTRATOR);
+    $name = Validator::requireString($_POST['legal_name'] ?? null, 'legal_name', 255);
+    $reg = Validator::optional($_POST['registration_number'] ?? null, [Validator::class, 'requireString'], 'registration_number', 100);
+    $stmt = Db::app()->prepare('INSERT INTO bidders (bidder_id, legal_name, registration_number, verification_status, verified_at, created_at) VALUES (:i,:n,:r,"verified",:t,:t2)');
+    $stmt->bindValue(':i', Uuid::bin(), PDO::PARAM_LOB);
+    $stmt->bindValue(':n', $name);
+    $stmt->bindValue(':r', $reg, $reg === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+    $stmt->bindValue(':t', Clock::mysql(Clock::now()));
+    $stmt->bindValue(':t2', Clock::mysql(Clock::now()));
+    $stmt->execute();
+    redirect('/admin', 'ok', 'Bidder organisation created.');
 }
 
 function pageAudit(array $config): void
