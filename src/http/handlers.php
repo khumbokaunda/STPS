@@ -153,9 +153,13 @@ function actionRoleApproval(): void
     $entityId = Uuid::fromString($entityHex);
     $meta = requisitionAmountType($entityId, $entityType);
     $stages = rm()->workflowStagesFor($meta['type'], $meta['amount']);
+    if (!$stages) {
+        redirect('/approvals', 'err', "No approval workflow is configured for {$meta['type']} at this amount. An administrator must seed workflows (migration 005_seed_workflows.sql).");
+    }
     $stage = firstRoleStageFor($ctx['user_bin'], $stages);
     if ($stage === null) {
-        redirect('/approvals', 'err', 'No role stage you can satisfy for this item.');
+        $need = implode(', ', array_values(array_filter(array_map(fn($s) => $s['role_name'], $stages))));
+        redirect('/approvals', 'err', "Your roles do not match any stage of this item's workflow. Stages require: {$need}.");
     }
 
     $canonical = rebuildCanonical(DomainSeparators::APPROVAL, [

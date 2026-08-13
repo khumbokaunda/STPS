@@ -9,12 +9,14 @@ Apply in order with the `proc_migrate` account.
 | `002_privileges.sql` | Database privilege split: `proc_migrate`, `proc_app`, `proc_verify`. |
 | `003_additive_evidence_payloads.sql` | Additive columns storing exported canonical evidence bytes. |
 | `004_seed_roles.sql` | Seed the ten fixed roles. |
+| `005_seed_workflows.sql` | Seed default approval workflows + stages (required so approvals work). |
 
 ```
 mysql -u proc_migrate -p secure_procurement < migrations/001_secure_procurement_schema_v2.sql
 mysql -u root       -p                     < migrations/002_privileges.sql
 mysql -u proc_migrate -p secure_procurement < migrations/003_additive_evidence_payloads.sql
 mysql -u proc_migrate -p secure_procurement < migrations/004_seed_roles.sql
+mysql -u proc_migrate -p secure_procurement < migrations/005_seed_workflows.sql
 ```
 
 ### MariaDB / MySQL 5.7 (XAMPP, WAMP, most phpMyAdmin installs)
