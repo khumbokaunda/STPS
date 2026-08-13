@@ -4,7 +4,8 @@ Apply in order with the `proc_migrate` account.
 
 | File | Purpose |
 |---|---|
-| `001_secure_procurement_schema_v2.sql` | The authoritative schema (attached, applied unmodified). |
+| `001_secure_procurement_schema_v2.sql` | The authoritative schema (attached, applied unmodified). MySQL 8.0+. |
+| `001_secure_procurement_schema_v2_mariadb.sql` | Same schema for **MariaDB / MySQL 5.7** (XAMPP, WAMP). Only difference: collation `utf8mb4_unicode_ci` instead of the MySQL-8-only `utf8mb4_0900_ai_ci`. |
 | `002_privileges.sql` | Database privilege split: `proc_migrate`, `proc_app`, `proc_verify`. |
 | `003_additive_evidence_payloads.sql` | Additive columns storing exported canonical evidence bytes. |
 | `004_seed_roles.sql` | Seed the ten fixed roles. |
@@ -15,6 +16,21 @@ mysql -u root       -p                     < migrations/002_privileges.sql
 mysql -u proc_migrate -p secure_procurement < migrations/003_additive_evidence_payloads.sql
 mysql -u proc_migrate -p secure_procurement < migrations/004_seed_roles.sql
 ```
+
+### MariaDB / MySQL 5.7 (XAMPP, WAMP, most phpMyAdmin installs)
+
+If import fails with `#1273 - Unknown collation: 'utf8mb4_0900_ai_ci'`, your server
+is MariaDB or MySQL 5.7, which lack that MySQL-8 collation. Use the `_mariadb`
+variant for step 001 and apply the rest unchanged:
+
+```
+mysql -u root -p secure_procurement < migrations/001_secure_procurement_schema_v2_mariadb.sql
+```
+
+In phpMyAdmin: create/select the database, open the **Import** tab, and choose
+`001_secure_procurement_schema_v2_mariadb.sql`. Then import 002-004 the same way.
+Requirements for the CHECK constraints and triggers to be enforced: MariaDB 10.2+
+(10.4+ recommended) or MySQL 5.7+.
 
 ## Note on migration 003 (a deliberate, additive schema change)
 

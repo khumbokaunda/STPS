@@ -7,15 +7,17 @@
 
 USE secure_procurement;
 
+-- UUID bytes are produced with UNHEX(REPLACE(UUID(),'-','')) rather than the
+-- MySQL-8-only UUID_TO_BIN(), so this seed runs on both MySQL 8.0+ and MariaDB.
 INSERT INTO roles (role_id, name, description) VALUES
-  (UUID_TO_BIN(UUID()), 'Requisitioner',        'Raises and submits requisitions'),
-  (UUID_TO_BIN(UUID()), 'HeadOfDepartment',     'Departmental approval authority'),
-  (UUID_TO_BIN(UUID()), 'PDUOfficer',           'Procurement and Disposal Unit officer'),
-  (UUID_TO_BIN(UUID()), 'EvaluationTeamMember', 'Evaluates bids and signs scores'),
-  (UUID_TO_BIN(UUID()), 'IPDCMember',           'Internal Procurement and Disposal Committee member'),
-  (UUID_TO_BIN(UUID()), 'ControllingOfficer',   'Constitutes teams and signs contracts'),
-  (UUID_TO_BIN(UUID()), 'StoresOfficer',        'Records deliveries and inspections'),
-  (UUID_TO_BIN(UUID()), 'FinanceOfficer',       'Submits invoices and records payments'),
-  (UUID_TO_BIN(UUID()), 'SystemAdministrator',  'System actor for automated steps'),
-  (UUID_TO_BIN(UUID()), 'Bidder',               'External supplier account')
+  (UNHEX(REPLACE(UUID(),'-','')), 'Requisitioner',        'Raises and submits requisitions'),
+  (UNHEX(REPLACE(UUID(),'-','')), 'HeadOfDepartment',     'Departmental approval authority'),
+  (UNHEX(REPLACE(UUID(),'-','')), 'PDUOfficer',           'Procurement and Disposal Unit officer'),
+  (UNHEX(REPLACE(UUID(),'-','')), 'EvaluationTeamMember', 'Evaluates bids and signs scores'),
+  (UNHEX(REPLACE(UUID(),'-','')), 'IPDCMember',           'Internal Procurement and Disposal Committee member'),
+  (UNHEX(REPLACE(UUID(),'-','')), 'ControllingOfficer',   'Constitutes teams and signs contracts'),
+  (UNHEX(REPLACE(UUID(),'-','')), 'StoresOfficer',        'Records deliveries and inspections'),
+  (UNHEX(REPLACE(UUID(),'-','')), 'FinanceOfficer',       'Submits invoices and records payments'),
+  (UNHEX(REPLACE(UUID(),'-','')), 'SystemAdministrator',  'System actor for automated steps'),
+  (UNHEX(REPLACE(UUID(),'-','')), 'Bidder',               'External supplier account')
 ON DUPLICATE KEY UPDATE description = VALUES(description);
