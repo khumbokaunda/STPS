@@ -79,7 +79,9 @@ DROP TABLE IF EXISTS roles;
 DROP TABLE IF EXISTS bidders;
 DROP TABLE IF EXISTS departments;
 DROP TABLE IF EXISTS users;
-SET FOREIGN_KEY_CHECKS = 1;
+-- FK checks stay OFF through all CREATEs so tables with forward references
+-- (approvals, bid_commitments, bid_reveals, evaluation_scores -> crypto_keys)
+-- create in file order. Re-enabled at the very end of this file.
 
 -- ============================================================
 -- IDENTITY & ACCESS
@@ -831,3 +833,7 @@ JOIN (
 --     FK; the application must validate the referenced entity.
 -- 10. escrow_ciphertext is meaningful only with threshold-controlled
 --     decryption (M-of-N). Treated as a Phase-2 enhancement.
+
+
+-- All tables now exist; re-enable foreign key enforcement.
+SET FOREIGN_KEY_CHECKS = 1;
