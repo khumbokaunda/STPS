@@ -1,0 +1,31 @@
+# Front-controller routing for Apache (XAMPP/WAMP).
+#
+# Every request that is not an existing file or directory is routed to
+# index.php, which dispatches the JSON API (/api/*) and serves the UI shell.
+# Requires mod_rewrite (enabled by default in XAMPP) and AllowOverride All on
+# this directory in the vhost.
+#
+# Only the /public directory is a web root; nothing above it is served.
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Serve real files and directories as-is (assets, app.html).
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Everything else (including /api/*) goes to the front controller.
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Fallback if mod_rewrite is unavailable.
+<IfModule !mod_rewrite.c>
+    FallbackResource /index.php
+</IfModule>
+
+# Do not serve the config or dotfiles even if misplaced.
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
