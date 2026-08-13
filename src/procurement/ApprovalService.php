@@ -208,15 +208,18 @@ final class ApprovalService
 
         return Db::transaction($this->s->pdo, function (PDO $pdo) use (
             $approvalId, $stageId16, $committeeDecisionId16, $entityType, $entityId16,
-            $userId16, $keyId16, $decision, $reason, $payloadHash, $signature, $now
+            $userId16, $keyId16, $decision, $reason, $payloadHash, $signature, $canonical, $now
         ) {
+            // Store the EXACT canonical bytes that were signed (additive migration
+            // 003) so the independent verifier can re-verify the signature without
+            // trusting the application.
             $stmt = $pdo->prepare(
                 'INSERT INTO approvals
                     (approval_id, workflow_stage_id, committee_decision_id, entity_type,
                      entity_id, approver_id, key_id, decision, reason,
-                     signed_payload_hash, signature, schema_version, decided_at)
+                     signed_payload_hash, signature, canonical_payload, schema_version, decided_at)
                  VALUES (:id, :stage, :cdid, :etype, :eid, :approver, :key, :decision,
-                         :reason, :phash, :sig, :schema, :decided)'
+                         :reason, :phash, :sig, :canon, :schema, :decided)'
             );
             $stmt->bindValue(':id', $approvalId, PDO::PARAM_LOB);
             $stmt->bindValue(':stage', $stageId16, PDO::PARAM_LOB);
@@ -229,6 +232,7 @@ final class ApprovalService
             $stmt->bindValue(':reason', $reason, $reason === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
             $stmt->bindValue(':phash', $payloadHash, PDO::PARAM_LOB);
             $stmt->bindValue(':sig', $signature, PDO::PARAM_LOB);
+            $stmt->bindValue(':canon', $canonical, PDO::PARAM_LOB);
             $stmt->bindValue(':schema', DomainSeparators::APPROVAL);
             $stmt->bindValue(':decided', Clock::mysql($now));
             $stmt->execute();
