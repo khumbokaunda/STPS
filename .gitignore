@@ -1,0 +1,6 @@
+/config/config.php
+/config/certs/*.pem
+/config/certs/*.crt
+*.log
+/vendor/
+.DS_Store

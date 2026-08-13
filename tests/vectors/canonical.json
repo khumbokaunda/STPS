@@ -1,0 +1,39 @@
+{
+  "description": "Shared RFC 8785 canonicalization vectors. Both src/crypto/Canonicalizer.php and public/assets/js/canonicalizer.js must produce the 'canonical' string exactly. The PHP and JS test runners also assert byte-for-byte parity between the two implementations.",
+  "vectors": [
+    {
+      "name": "empty_object",
+      "input": {},
+      "canonical": "{}"
+    },
+    {
+      "name": "key_sorting",
+      "input": {"b": 1, "a": 2, "c": 3},
+      "canonical": "{\"a\":2,\"b\":1,\"c\":3}"
+    },
+    {
+      "name": "requisition_payload",
+      "input": {
+        "schema": "PROCUREMENT-REQUISITION-V1",
+        "requisition_id": "0a1b2c3d4e5f60718293a4b5c6d7e8f9",
+        "reference_no": "REQ-2026-001",
+        "title": "Medical supplies",
+        "estimated_value": "125000000.00",
+        "currency_code": "MWK",
+        "procurement_type": "GOODS",
+        "created_at": "2026-08-13T07:30:00.000Z"
+      },
+      "canonical": "{\"created_at\":\"2026-08-13T07:30:00.000Z\",\"currency_code\":\"MWK\",\"estimated_value\":\"125000000.00\",\"procurement_type\":\"GOODS\",\"reference_no\":\"REQ-2026-001\",\"requisition_id\":\"0a1b2c3d4e5f60718293a4b5c6d7e8f9\",\"schema\":\"PROCUREMENT-REQUISITION-V1\",\"title\":\"Medical supplies\"}"
+    },
+    {
+      "name": "unicode_and_escapes",
+      "input": {"note": "line1\nline2\ttab\"quote\\slash", "u": "café"},
+      "canonical": "{\"note\":\"line1\\nline2\\ttab\\\"quote\\\\slash\",\"u\":\"café\"}"
+    },
+    {
+      "name": "nested_and_array",
+      "input": {"items": [{"q": "3.0000", "p": "10.00"}, {"q": "1.5000", "p": "5.50"}], "n": 2},
+      "canonical": "{\"items\":[{\"p\":\"10.00\",\"q\":\"3.0000\"},{\"p\":\"5.50\",\"q\":\"1.5000\"}],\"n\":2}"
+    }
+  ]
+}
