@@ -91,17 +91,47 @@
     setHidden(form, '_key_id', k);
   }
 
+  // Show a signing error without alert(): prefer a toast, fall back to an inline
+  // region, then console. Signing logic itself is unchanged (build spec 8.1).
+  function showError(form, message) {
+    if (window.STPS && typeof window.STPS.toast === 'function') {
+      window.STPS.toast(message, 'err');
+    }
+    var region = form.querySelector('.sign-error');
+    if (region) { region.textContent = message; region.classList.remove('d-none'); }
+    if (!(window.STPS && window.STPS.toast) && !region) {
+      // Last resort: never alert(); log so the CSP/UX rules hold.
+      try { console.error('[signing] ' + message); } catch (e) {}
+    }
+  }
+
+  function setBusy(form, busy) {
+    var btn = form.querySelector('button[type="submit"], button:not([type])');
+    if (!btn) return;
+    if (busy) {
+      btn.dataset.label = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Signing…';
+    } else {
+      btn.disabled = false;
+      if (btn.dataset.label) btn.innerHTML = btn.dataset.label;
+    }
+    if (window.STPS && window.STPS.setKeyBusy) window.STPS.setKeyBusy(busy);
+  }
+
   function attach(form) {
     var mode = form.dataset.sign;
     form.addEventListener('submit', function (ev) {
       if (form.__signed) return; // second pass: allow native submit
       ev.preventDefault();
       var fn = mode === 'commit' ? handleCommit : (mode === 'reveal' ? handleReveal : handleGeneric);
+      setBusy(form, true);
       fn(form).then(function () {
         form.__signed = true;
         form.submit();
       }).catch(function (e) {
-        alert(e.message);
+        setBusy(form, false);
+        showError(form, e.message);
       });
     });
   }

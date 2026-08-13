@@ -16,6 +16,16 @@ declare(strict_types=1);
  *   GET/POST /api/*   -> small JSON API (CSRF token, key enrollment, verifier).
  */
 
+// When served by the PHP built-in server (development), let existing static files
+// (assets, vendored Bootstrap) be served directly instead of routing them through
+// the front controller. In production Apache serves them via public/.htaccess.
+if (PHP_SAPI === 'cli-server') {
+    $file = __DIR__ . parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+    if (is_file($file)) {
+        return false;
+    }
+}
+
 $root = dirname(__DIR__);
 require_once $root . '/src/http/Http.php';
 require_once $root . '/src/http/Csrf.php';

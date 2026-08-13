@@ -1,59 +1,51 @@
 <?php /** @var array $contracts */ /** @var array $pos */ ?>
+<div class="page-header"><h2>Execution</h2><p>Purchase orders, deliveries, and signed inspections.</p></div>
+
 <section class="card">
-  <h2>Issue a purchase order</h2>
-  <form method="post" action="/execution/po" class="row">
-    <input type="hidden" name="_csrf" value="<?= $e($csrf) ?>">
-    <label>Contract
-      <select name="contract_id" required>
-        <?php foreach ($contracts as $c): ?><option value="<?= $e($c['id']) ?>"><?= $e($c['contract_number']) ?></option><?php endforeach; ?>
-      </select>
-    </label>
-    <label>PO number <input name="po_number" required></label>
-    <label>Total value <input name="total_value" inputmode="decimal" required></label>
-    <label>Currency <select name="currency_code"><option>MWK</option><option>USD</option><option>EUR</option><option>GBP</option><option>ZAR</option></select></label>
-    <button type="submit">Issue PO</button>
-  </form>
-  <?php if ($pos): ?>
-    <table>
-      <thead><tr><th>PO id</th><th>Number</th><th>Contract</th><th>Status</th></tr></thead>
-      <tbody><?php foreach ($pos as $p): ?><tr><td class="mono small"><?= $e($p['id']) ?></td><td><?= $e($p['po_number']) ?></td><td><?= $e($p['contract_number']) ?></td><td><?= $e($p['status']) ?></td></tr><?php endforeach; ?></tbody>
-    </table>
-  <?php endif; ?>
+  <div class="card-header">Issue a purchase order</div>
+  <div class="card-body">
+    <form method="post" action="/execution/po" class="grid-form">
+      <input type="hidden" name="_csrf" value="<?= $e($csrf) ?>">
+      <div><label class="form-label">Contract</label><select class="form-select" name="contract_id" required><?php foreach ($contracts as $c): ?><option value="<?= $e($c['id']) ?>"><?= $e($c['contract_number']) ?></option><?php endforeach; ?></select></div>
+      <div><label class="form-label">PO number</label><input class="form-control" name="po_number" required></div>
+      <div><label class="form-label">Total value</label><div class="input-group"><input class="form-control" name="total_value" inputmode="decimal" required><span class="input-group-text">MWK</span></div></div>
+      <div><label class="form-label">Currency</label><select class="form-select" name="currency_code"><option>MWK</option><option>USD</option><option>EUR</option><option>GBP</option><option>ZAR</option></select></div>
+      <div><button type="submit" class="btn btn-primary">Issue PO</button></div>
+    </form>
+    <?php if ($pos): ?>
+      <div class="table-wrap mt-3"><table class="table table-hover">
+        <thead><tr><th>PO id</th><th>Number</th><th>Contract</th><th>Status</th></tr></thead>
+        <tbody><?php foreach ($pos as $p): ?><tr>
+          <td><span class="hashid"><code><?= $e(substr($p['id'], 0, 12)) ?>…</code><button type="button" class="copy-btn" data-copy="<?= $e($p['id']) ?>" title="Copy"><i class="bi bi-clipboard"></i></button></span></td>
+          <td><?= $e($p['po_number']) ?></td><td><?= $e($p['contract_number']) ?></td><td><?= View::pill($p['status']) ?></td></tr><?php endforeach; ?></tbody>
+      </table></div>
+    <?php endif; ?>
+  </div>
 </section>
 
 <section class="card">
-  <h2>Record a delivery</h2>
-  <form method="post" action="/execution/delivery" class="row">
-    <input type="hidden" name="_csrf" value="<?= $e($csrf) ?>">
-    <label>Purchase order id (hex) <input name="purchase_order_id" class="mono" required></label>
-    <label>Delivery reference <input name="delivery_reference" required></label>
-    <button type="submit">Record delivery</button>
-  </form>
+  <div class="card-header">Record a delivery</div>
+  <div class="card-body">
+    <form method="post" action="/execution/delivery" class="grid-form">
+      <input type="hidden" name="_csrf" value="<?= $e($csrf) ?>">
+      <div><label class="form-label">Purchase order id (hex)</label><input class="form-control mono" name="purchase_order_id" required></div>
+      <div><label class="form-label">Delivery reference</label><input class="form-control" name="delivery_reference" required></div>
+      <div><button type="submit" class="btn btn-primary">Record delivery</button></div>
+    </form>
+  </div>
 </section>
 
 <section class="card">
-  <h2>Record an inspection</h2>
-  <p class="muted small">Inspections are signed by the inspector and ledgered.</p>
-  <form method="post" action="/execution/inspection" data-sign="generic" data-domain="PROCUREMENT-INSPECTION-V1" class="row">
-    <input type="hidden" name="_csrf" value="<?= $e($csrf) ?>">
-    <input type="hidden" name="created_at" data-canon="created_at" data-timestamp value="">
-    <label>Delivery id (hex) <input name="delivery_id" data-canon="delivery_id" class="mono" required></label>
-    <label>Result
-      <select name="result" data-canon="result"><option>accepted</option><option>partially_accepted</option><option>rejected</option></select>
-    </label>
-    <button type="submit">Sign inspection</button>
-  </form>
-</section>
-
-<section class="card">
-  <h2>Contracts (for reference)</h2>
-  <table>
-    <thead><tr><th>Contract id</th><th>Number</th><th>Status</th></tr></thead>
-    <tbody>
-      <?php foreach ($contracts as $c): ?>
-        <tr><td class="mono small"><?= $e($c['id']) ?></td><td><?= $e($c['contract_number']) ?></td><td><?= $e($c['status']) ?></td></tr>
-      <?php endforeach; ?>
-      <?php if (!$contracts): ?><tr><td colspan="3" class="muted">No contracts yet.</td></tr><?php endif; ?>
-    </tbody>
-  </table>
+  <div class="card-header">Record an inspection</div>
+  <div class="card-body">
+    <form method="post" action="/execution/inspection" data-sign="generic" data-domain="PROCUREMENT-INSPECTION-V1" class="grid-form">
+      <input type="hidden" name="_csrf" value="<?= $e($csrf) ?>">
+      <input type="hidden" name="created_at" data-canon="created_at" data-timestamp value="">
+      <div><label class="form-label">Delivery id (hex)</label><input class="form-control mono" name="delivery_id" data-canon="delivery_id" required></div>
+      <div><label class="form-label">Result</label><select class="form-select" name="result" data-canon="result"><option>accepted</option><option>partially_accepted</option><option>rejected</option></select></div>
+      <div><button type="submit" class="btn btn-primary"><i class="bi bi-pen"></i> Sign inspection</button></div>
+    </form>
+    <p class="sign-note mt-2 mb-0"><i class="bi bi-pen"></i> Signed with your device key.</p>
+    <div class="sign-error d-none"></div>
+  </div>
 </section>
