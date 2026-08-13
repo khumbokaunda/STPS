@@ -35,7 +35,13 @@ final class Signer
      */
     public static function verifyDigest(string $digest32, string $signature, string $publicKeyPem): bool
     {
-        $der = self::toDer($signature);
+        // A malformed signature (wrong length, not P1363, not DER) is a failed
+        // verification, not an error. Convert defensively.
+        try {
+            $der = self::toDer($signature);
+        } catch (Throwable $e) {
+            return false;
+        }
         $key = openssl_pkey_get_public($publicKeyPem);
         if ($key === false) {
             return false;

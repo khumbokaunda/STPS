@@ -47,6 +47,13 @@ if ($node !== '') {
     }
 }
 
+// Offline SQLite-backed adversarial suite against the real Verifier (no MySQL).
+echo "\n=== php adversarial/test_adversarial_sqlite.php ===\n";
+passthru('php ' . escapeshellarg("$root/tests/adversarial/test_adversarial_sqlite.php"), $rc);
+if ($rc !== 0) {
+    $failed[] = 'adversarial/test_adversarial_sqlite.php';
+}
+
 if ($withDb) {
     foreach (['integration/test_full_run.php', 'adversarial/test_adversarial.php'] as $t) {
         $path = "$root/tests/$t";
