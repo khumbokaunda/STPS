@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Secure Procurement (tamper-evident prototype)</title>
+  <!-- Bootstrap 5 is expected to be vendored locally into /assets/css to satisfy
+       the strict Content-Security-Policy (script-src/style-src 'self'). This
+       prototype ships a minimal local stylesheet in its place. -->
+  <link rel="stylesheet" href="/assets/css/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>Secure Public Procurement</h1>
+    <p class="claim">
+      Tamper-<strong>evident</strong>, not tamper-proof. The system does not prevent a
+      privileged operator from modifying the database; it makes any unauthorized
+      historical modification independently detectable by an auditor who trusts none
+      of the system's own infrastructure.
+    </p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>1. Device key enrollment</h2>
+      <p>
+        Your private signing key is generated in this browser as a non-extractable
+        key and stored in IndexedDB. It never leaves your device and is never sent
+        to the server. Only the public key is enrolled.
+      </p>
+      <button id="btn-enroll">Generate &amp; enroll signing key</button>
+      <div id="enroll-status" class="status"></div>
+    </section>
+
+    <section class="card">
+      <h2>2. Sign in</h2>
+      <label>Username <input id="login-username" autocomplete="username"></label>
+      <label>Password <input id="login-password" type="password" autocomplete="current-password"></label>
+      <button id="btn-login">Sign in</button>
+      <div id="login-status" class="status"></div>
+    </section>
+
+    <section class="card">
+      <h2>3. Commit a sealed bid</h2>
+      <p>Only the commitment C and its signature are sent. The bid and the random
+        nonce stay in your browser until reveal.</p>
+      <label>RFQ id (hex) <input id="commit-rfq"></label>
+      <label>Bidder id (hex) <input id="commit-bidder"></label>
+      <label>Bid amount (MWK) <input id="commit-amount" value="98000000.00"></label>
+      <button id="btn-commit">Commit bid</button>
+      <div id="commit-status" class="status"></div>
+    </section>
+
+    <section class="card">
+      <h2>4. Reveal the bid</h2>
+      <label>Bid id (hex) <input id="reveal-bid"></label>
+      <label>RFQ id (hex) <input id="reveal-rfq"></label>
+      <button id="btn-reveal">Reveal bid</button>
+      <div id="reveal-status" class="status"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Independent verification: run <code>php bin/verify.php</code> with read-only
+      credentials. A PASS while trusting no application code is the headline result.</p>
+  </footer>
+
+  <script src="/assets/js/canonicalizer.js"></script>
+  <script src="/assets/js/webcrypto-client.js"></script>
+  <script src="/assets/js/app.js"></script>
+</body>
+</html>

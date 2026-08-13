@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "php --version >/dev/null 2>&1 && echo 'STPS: php ready. Run the test suite with: php tests/run.php' || echo 'STPS: PHP 8.1+ is required for this project.'"
+          }
+        ]
+      }
+    ]
+  }
+}

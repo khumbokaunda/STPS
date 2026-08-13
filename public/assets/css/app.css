@@ -1,0 +1,61 @@
+/*
+ * app.css  --  minimal local stylesheet standing in for a locally vendored
+ * Bootstrap 5 build. Kept local (not a CDN) so the strict Content-Security-Policy
+ * (style-src 'self') is satisfied and the page is self-contained.
+ */
+:root {
+  --bg: #0f1720;
+  --card: #17212b;
+  --ink: #e6edf3;
+  --muted: #9fb0c0;
+  --accent: #2d9cdb;
+  --ok: #2ecc71;
+  --err: #e74c3c;
+  --line: #26333f;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.5;
+}
+.topbar { padding: 1.5rem 1.5rem 0.5rem; border-bottom: 1px solid var(--line); }
+.topbar h1 { margin: 0 0 0.25rem; font-size: 1.5rem; }
+.claim { color: var(--muted); max-width: 60rem; font-size: 0.95rem; }
+main { display: grid; gap: 1rem; padding: 1.5rem; max-width: 60rem; }
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 1.25rem;
+}
+.card h2 { margin-top: 0; font-size: 1.15rem; }
+label { display: block; margin: 0.5rem 0; color: var(--muted); font-size: 0.9rem; }
+input {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.5rem 0.6rem;
+  background: #0d151d;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--ink);
+}
+button {
+  margin-top: 0.75rem;
+  padding: 0.55rem 1rem;
+  background: var(--accent);
+  color: #fff;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+button:hover { filter: brightness(1.08); }
+.status { margin-top: 0.75rem; font-size: 0.9rem; min-height: 1.2em; }
+.status.ok { color: var(--ok); }
+.status.err { color: var(--err); }
+footer { padding: 1rem 1.5rem 2rem; color: var(--muted); border-top: 1px solid var(--line); }
+code { background: #0d151d; padding: 0.1rem 0.35rem; border-radius: 4px; }
